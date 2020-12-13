@@ -2,12 +2,15 @@
 # Author : Adrien Pillou
 # Date : 12/13/2020
 
-# ---Day 13: Shuttle Search--- : https://adventofcode.com/2020/day/13
+# ---Day 13: Shuttle Search--- : https://adventofcode.com/2020/day/13#part2
 # Part two : What is the earliest timestamp such that all of the listed bus IDs depart at offsets matching their positions in the list ?
-# Answer : ?
+# Answer : 100023729388239 / FAILED
+
+# To see : Chinese remainder theorem
 
 import math
 import numpy as np
+import time
 
 # Printing formatted bus schedule
 def show_schedule(array, header_list):
@@ -22,32 +25,52 @@ def show_schedule(array, header_list):
 
 if __name__ == "__main__":
     buses = [17, 37, 439, 29, 13, 23, 787, 41, 19] # buses ids
-    could_depart = 1000067 # Earliest timestamp you could depart on a bus
-    stamp = (could_depart-10, could_depart+10) # Time interval
-    wait = math.inf # Waiting time
-    goto_bus = None # The bus you need to take to go to the airport
+    stamp = 3417 # current timestamp value
+    interval = (stamp, stamp+20) # Time interval
     schedule = np.chararray((21, len(buses)+1), 9, unicode = True) # Schedule char array
-    header = ["time"] # Schedule header
+    answer = None
 
+    header = ["time"] # Schedule header
+    for bus in buses:
+        header.append(f"bus {bus}")
+
+    # Finding the earliest occurence
+    stamp = 0
+    dt = 0
+    offset = 0
+
+    while answer is None:
+       stamp+=buses[0]
+       dt = 0
+       offset = 0
+       for b in range(1, len(buses)):
+           while (stamp + offset + dt)%buses[b]!=0 or dt>3:
+               dt+=1
+           if (dt>3):
+               break
+           offset+=dt
+           dt = 1
+           if buses[b] == buses[-1]:
+               answer = stamp
+       if stamp > 500000000000000:
+           answer = 0
+
+    # Creating the schedule at specified time stamp
+    stamp = answer
+    interval = (stamp, stamp+20) # Updating time interval
     for i,b in enumerate(buses): # Looping through all buses
-        header.append(f"bus {b}")
-        for t in range(stamp[0], stamp[1]+1): # Iterating through time interval
-            schedule[t-stamp[0], 0] = str(t)
+        for t in range(interval[0], interval[1]+1): # Iterating through time interval
+            schedule[t-interval[0], 0] = str(t)
             if t%b == 0: # Using modulus to know buses departure
-                schedule[t-stamp[0], i+1] = 'D'
-                if(could_depart<=t):
-                    if(wait>=t-could_depart): # Minimizing the waiting time
-                        goto_bus = b # Selecting a bus 
-                        wait = t-could_depart
+                schedule[t-interval[0], i+1] = 'D'
+            elif t==stamp:
+                schedule[t-interval[0], i+1] = '░'# The bus is on it's way
             else:
-                schedule[t-stamp[0], i+1] = '.'# The bus is on his way
-                        
+                schedule[t-interval[0], i+1] = '.'# The bus is on it's way
+
     print("*** AIRPORT SHUTTLE SERVICE ***")
     show_schedule(schedule, header)
-    if wait == 0:
-        print(f"\nBus {goto_bus} is on departure !")
-    else:
-        print(f"\nYou should take bus {goto_bus}.\nEstimated waiting time of {wait} minutes.")
-    print(f"Answer : {wait*goto_bus}")# Answering statement question
+    print (f"Answer : {answer}")
+
 
 
